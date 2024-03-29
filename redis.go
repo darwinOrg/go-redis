@@ -2,6 +2,7 @@ package sand_river_sdk
 
 import (
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -55,4 +56,31 @@ func XAck(stream string, group string, messageId string) (int64, error) {
 
 func Del(keys ...string) (int64, error) {
 	return rdb.Del(context.TODO(), keys...).Result()
+}
+
+func AcquireLock(lockKey string, ttl time.Duration) (bool, error) {
+	success, err := rdb.SetNX(context.Background(), lockKey, "locked", ttl).Result()
+	if err != nil {
+		return false, fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	return success, nil
+}
+
+func ReleaseLock(lockKey string) error {
+	// 为了避免误删其他客户端的锁，可以使用Lua脚本来保证原子性
+	luaScript := `
+	if redis.call("get", KEYS[1]) == ARGV[1] then
+		return redis.call("del", KEYS[1])
+	else
+		return 0
+	end
+	`
+	res, err := rdb.Eval(context.Background(), luaScript, []string{lockKey}, "locked").Result()
+	if err != nil {
+		return fmt.Errorf("failed to release lock: %w", err)
+	}
+	if res.(int64) == 0 {
+		return fmt.Errorf("lock was not held")
+	}
+	return nil
 }
