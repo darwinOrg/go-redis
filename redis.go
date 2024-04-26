@@ -54,13 +54,8 @@ func XReadGroup(stream string, group string, consumer string, block time.Duratio
 	}).Result()
 }
 
-func XTrimMaxLen(streamKey string, maxLen int64) error {
-	_, err := Client.XTrimMaxLen(context.Background(), streamKey, maxLen).Result()
-	if err != nil {
-		return fmt.Errorf("failed to trim Redis Stream: %w", err)
-	}
-
-	return nil
+func XTrimMaxLen(stream string, maxLen int64) (int64, error) {
+	return Client.XTrimMaxLen(context.Background(), stream, maxLen).Result()
 }
 
 func XAck(stream string, group string, messageId string) (int64, error) {
