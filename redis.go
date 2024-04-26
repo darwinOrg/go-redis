@@ -1,4 +1,4 @@
-package sand_river_sdk
+package redisdk
 
 import (
 	"context"
@@ -7,10 +7,14 @@ import (
 	"time"
 )
 
-var rdb *redis.Client
+var Client *redis.Client
+
+func SetClient(client *redis.Client) {
+	Client = client
+}
 
 func InitClient(addr string) {
-	rdb = redis.NewClient(&redis.Options{
+	Client = redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: "",
 		DB:       0,
@@ -18,30 +22,30 @@ func InitClient(addr string) {
 }
 
 func Set(key string, value interface{}, expiration time.Duration) (string, error) {
-	return rdb.Set(context.TODO(), key, value, expiration).Result()
+	return Client.Set(context.TODO(), key, value, expiration).Result()
 }
 
 func Get(key string) (string, error) {
-	return rdb.Get(context.TODO(), key).Result()
+	return Client.Get(context.TODO(), key).Result()
 }
 
 func XAdd(stream string, values interface{}) (string, error) {
-	return rdb.XAdd(context.TODO(), &redis.XAddArgs{
+	return Client.XAdd(context.TODO(), &redis.XAddArgs{
 		Stream: stream,
 		Values: values,
 	}).Result()
 }
 
 func XGroupCreateMkStream(stream string, group string) (string, error) {
-	return rdb.XGroupCreateMkStream(context.TODO(), stream, group, "$").Result()
+	return Client.XGroupCreateMkStream(context.TODO(), stream, group, "$").Result()
 }
 
 func XGroupDestroy(stream string, group string) (int64, error) {
-	return rdb.XGroupDestroy(context.TODO(), stream, group).Result()
+	return Client.XGroupDestroy(context.TODO(), stream, group).Result()
 }
 
 func XReadGroup(stream string, group string, consumer string, block time.Duration, count int64) ([]redis.XStream, error) {
-	return rdb.XReadGroup(context.TODO(), &redis.XReadGroupArgs{
+	return Client.XReadGroup(context.TODO(), &redis.XReadGroupArgs{
 		Group:    group,
 		Consumer: consumer,
 		Streams:  []string{stream, ">"},
@@ -51,15 +55,15 @@ func XReadGroup(stream string, group string, consumer string, block time.Duratio
 }
 
 func XAck(stream string, group string, messageId string) (int64, error) {
-	return rdb.XAck(context.TODO(), stream, group, messageId).Result()
+	return Client.XAck(context.TODO(), stream, group, messageId).Result()
 }
 
 func Del(keys ...string) (int64, error) {
-	return rdb.Del(context.TODO(), keys...).Result()
+	return Client.Del(context.TODO(), keys...).Result()
 }
 
 func AcquireLock(lockKey string, ttl time.Duration) (bool, error) {
-	success, err := rdb.SetNX(context.Background(), lockKey, "locked", ttl).Result()
+	success, err := Client.SetNX(context.Background(), lockKey, "locked", ttl).Result()
 	if err != nil {
 		return false, fmt.Errorf("failed to acquire lock: %w", err)
 	}
@@ -75,7 +79,7 @@ func ReleaseLock(lockKey string) error {
 		return 0
 	end
 	`
-	res, err := rdb.Eval(context.Background(), luaScript, []string{lockKey}, "locked").Result()
+	res, err := Client.Eval(context.Background(), luaScript, []string{lockKey}, "locked").Result()
 	if err != nil {
 		return fmt.Errorf("failed to release lock: %w", err)
 	}
