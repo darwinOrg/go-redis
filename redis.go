@@ -36,7 +36,7 @@ func XAdd(stream string, values interface{}) (string, error) {
 	}).Result()
 }
 
-func XAddWithPExpired(stream string, expiration time.Duration) (string, error) {
+func XAddWithExpiration(stream string, expiration time.Duration) (string, error) {
 	val, err := Client.XAdd(context.Background(), &redis.XAddArgs{
 		Stream: stream,
 	}).Result()
