@@ -22,30 +22,60 @@ func InitClient(addr string) {
 }
 
 func Set(key string, value interface{}, expiration time.Duration) (string, error) {
-	return Client.Set(context.TODO(), key, value, expiration).Result()
+	return Client.Set(context.Background(), key, value, expiration).Result()
 }
 
 func Get(key string) (string, error) {
-	return Client.Get(context.TODO(), key).Result()
+	return Client.Get(context.Background(), key).Result()
 }
 
 func XAdd(stream string, values interface{}) (string, error) {
-	return Client.XAdd(context.TODO(), &redis.XAddArgs{
+	return Client.XAdd(context.Background(), &redis.XAddArgs{
 		Stream: stream,
 		Values: values,
 	}).Result()
 }
 
+func XAddWithPExpired(stream string, expiration time.Duration) (string, error) {
+	val, err := Client.XAdd(context.Background(), &redis.XAddArgs{
+		Stream: stream,
+	}).Result()
+	if err != nil {
+		return val, err
+	}
+	success, err := Client.PExpire(context.Background(), stream, expiration).Result()
+	if err != nil {
+		return val, err
+	}
+	if !success {
+		return val, fmt.Errorf("failed to set expiration for stream %s", stream)
+	}
+
+	return val, nil
+}
+
+func XAddValues(stream string, values interface{}) (string, error) {
+	return Client.XAdd(context.Background(), &redis.XAddArgs{
+		Stream:     stream,
+		Values:     values,
+		NoMkStream: true,
+	}).Result()
+}
+
+func XDel(stream string, ids ...string) (int64, error) {
+	return Client.XDel(context.Background(), stream, ids...).Result()
+}
+
 func XGroupCreateMkStream(stream string, group string) (string, error) {
-	return Client.XGroupCreateMkStream(context.TODO(), stream, group, "$").Result()
+	return Client.XGroupCreateMkStream(context.Background(), stream, group, "$").Result()
 }
 
 func XGroupDestroy(stream string, group string) (int64, error) {
-	return Client.XGroupDestroy(context.TODO(), stream, group).Result()
+	return Client.XGroupDestroy(context.Background(), stream, group).Result()
 }
 
 func XReadGroup(stream string, group string, consumer string, block time.Duration, count int64) ([]redis.XStream, error) {
-	return Client.XReadGroup(context.TODO(), &redis.XReadGroupArgs{
+	return Client.XReadGroup(context.Background(), &redis.XReadGroupArgs{
 		Group:    group,
 		Consumer: consumer,
 		Streams:  []string{stream, ">"},
@@ -59,11 +89,11 @@ func XTrimMaxLen(stream string, maxLen int64) (int64, error) {
 }
 
 func XAck(stream string, group string, messageId string) (int64, error) {
-	return Client.XAck(context.TODO(), stream, group, messageId).Result()
+	return Client.XAck(context.Background(), stream, group, messageId).Result()
 }
 
 func Del(keys ...string) (int64, error) {
-	return Client.Del(context.TODO(), keys...).Result()
+	return Client.Del(context.Background(), keys...).Result()
 }
 
 func AcquireLock(lockKey string, ttl time.Duration) (bool, error) {
