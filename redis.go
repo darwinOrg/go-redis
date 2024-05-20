@@ -15,9 +15,14 @@ func SetClient(client *redis.Client) {
 
 func InitClient(addr string) {
 	Client = redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: "",
-		DB:       0,
+		Addr: addr,
+	})
+}
+
+func InitFailoverClient(masterName string, sentinelAddrs []string) {
+	Client = redis.NewFailoverClient(&redis.FailoverOptions{
+		MasterName:    masterName,
+		SentinelAddrs: sentinelAddrs,
 	})
 }
 
