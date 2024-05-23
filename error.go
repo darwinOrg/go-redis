@@ -9,7 +9,7 @@ import (
 var NilErr = errors.New("nil")
 
 func wrapErr(err error) error {
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return NilErr
 	}
 	return err

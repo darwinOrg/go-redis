@@ -1,6 +1,7 @@
 package redisdk
 
 import (
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -209,7 +210,7 @@ func TestDelayQueue_Massive_Backlog(t *testing.T) {
 	ids := make([]string, 0, q.fetchLimit)
 	for {
 		idStr, err := q.ready2Unack()
-		if err == NilErr { // consumed all
+		if errors.Is(err, NilErr) { // consumed all
 			break
 		}
 		if err != nil {

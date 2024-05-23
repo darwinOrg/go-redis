@@ -1,6 +1,7 @@
 package redisdk
 
 import (
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"log"
@@ -72,9 +73,9 @@ func newDelayQueue(name string, opts ...any) *DelayQueue {
 	}
 	var keyPrefix string
 	if useHashTag {
-		keyPrefix = "{dp:" + name + "}"
+		keyPrefix = "{dq:" + name + "}"
 	} else {
-		keyPrefix = "dp:" + name
+		keyPrefix = "dq:" + name
 	}
 	return &DelayQueue{
 		name:               name,
@@ -146,9 +147,9 @@ func (q *DelayQueue) WithDefaultRetryCount(count uint) *DelayQueue {
 
 func (q *DelayQueue) genMsgKey(idStr string) string {
 	if q.useHashTag {
-		return "{dp:" + q.name + "}" + ":msg:" + idStr
+		return "{dq:" + q.name + "}" + ":msg:" + idStr
 	}
-	return "dp:" + q.name + ":msg:" + idStr
+	return "dq:" + q.name + ":msg:" + idStr
 }
 
 type retryCountOpt int
@@ -258,7 +259,7 @@ func (q *DelayQueue) ready2Unack() (string, error) {
 	retryTime := time.Now().Add(q.maxConsumeDuration).Unix()
 	keys := []string{q.readyKey, q.unAckKey}
 	ret, err := redisCli.Eval(ready2UnackScript, keys, []any{retryTime})
-	if err == NilErr {
+	if errors.Is(err, NilErr) {
 		return "", err
 	}
 	if err != nil {
@@ -276,7 +277,7 @@ func (q *DelayQueue) retry2Unack() (string, error) {
 	retryTime := time.Now().Add(q.maxConsumeDuration).Unix()
 	keys := []string{q.retryKey, q.unAckKey}
 	ret, err := redisCli.Eval(ready2UnackScript, keys, []any{retryTime, q.retryKey, q.unAckKey})
-	if err == NilErr {
+	if errors.Is(err, NilErr) {
 		return "", NilErr
 	}
 	if err != nil {
@@ -291,7 +292,7 @@ func (q *DelayQueue) retry2Unack() (string, error) {
 
 func (q *DelayQueue) callback(idStr string) error {
 	payload, err := redisCli.Get(q.genMsgKey(idStr))
-	if err == NilErr {
+	if errors.Is(err, NilErr) {
 		return nil
 	}
 	if err != nil {
@@ -479,7 +480,7 @@ func (q *DelayQueue) consume() error {
 	ids := make([]string, 0, q.fetchLimit)
 	for {
 		idStr, err := q.ready2Unack()
-		if err == NilErr { // consumed all
+		if errors.Is(err, NilErr) { // consumed all
 			break
 		}
 		if err != nil {
@@ -506,7 +507,7 @@ func (q *DelayQueue) consume() error {
 	ids = make([]string, 0, q.fetchLimit)
 	for {
 		idStr, err := q.retry2Unack()
-		if err == NilErr { // consumed all
+		if errors.Is(err, NilErr) { // consumed all
 			break
 		}
 		if err != nil {
