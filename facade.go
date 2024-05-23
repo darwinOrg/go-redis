@@ -77,8 +77,8 @@ func XAck(stream string, group string, messageId string) (int64, error) {
 	return redisCli.XAck(stream, group, messageId)
 }
 
-func Del(keys []string) error {
-	return redisCli.Del(keys)
+func Del(keys ...string) error {
+	return redisCli.Del(keys...)
 }
 
 func AcquireLock(lockKey string, ttl time.Duration) (bool, error) {

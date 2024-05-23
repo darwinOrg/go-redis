@@ -11,18 +11,18 @@ type RedisCli interface {
 	// Eval sends lua script to redis
 	// args should be string, integer or float
 	// returns string, int64, []any (elements can be string or int64)
-	Eval(script string, keys []string, args []any) (any, error)
+	Eval(script string, keys []string, args ...any) (any, error)
 	Set(key string, value any, expiration time.Duration) (string, error)
 	// Get represents redis command GET
 	// please NilErr when no such key in redis
 	Get(key string) (string, error)
-	Del(keys []string) error
+	Del(keys ...string) error
 	HSet(key string, field string, value string) error
-	HDel(key string, fields []string) error
+	HDel(key string, fields ...string) error
 	SMembers(key string) ([]string, error)
-	SRem(key string, members []string) error
+	SRem(key string, members ...string) error
 	ZAdd(key string, values map[string]float64) error
-	ZRem(key string, fields []string) error
+	ZRem(key string, fields ...string) error
 	ZCard(key string) (int64, error)
 	LLen(key string) (int64, error)
 
@@ -48,7 +48,7 @@ type redisV9Wrapper struct {
 	inner *redis.Client
 }
 
-func (r *redisV9Wrapper) Eval(script string, keys []string, args []any) (any, error) {
+func (r *redisV9Wrapper) Eval(script string, keys []string, args ...any) (any, error) {
 	ret, err := r.inner.Eval(context.Background(), script, keys, args...).Result()
 	return ret, wrapErr(err)
 }
@@ -63,7 +63,7 @@ func (r *redisV9Wrapper) Get(key string) (string, error) {
 	return ret, wrapErr(err)
 }
 
-func (r *redisV9Wrapper) Del(keys []string) error {
+func (r *redisV9Wrapper) Del(keys ...string) error {
 	return wrapErr(r.inner.Del(context.Background(), keys...).Err())
 }
 
@@ -71,7 +71,7 @@ func (r *redisV9Wrapper) HSet(key string, field string, value string) error {
 	return wrapErr(r.inner.HSet(context.Background(), key, field, value).Err())
 }
 
-func (r *redisV9Wrapper) HDel(key string, fields []string) error {
+func (r *redisV9Wrapper) HDel(key string, fields ...string) error {
 	return wrapErr(r.inner.HDel(context.Background(), key, fields...).Err())
 }
 
@@ -80,7 +80,7 @@ func (r *redisV9Wrapper) SMembers(key string) ([]string, error) {
 	return ret, wrapErr(err)
 }
 
-func (r *redisV9Wrapper) SRem(key string, members []string) error {
+func (r *redisV9Wrapper) SRem(key string, members ...string) error {
 	members2 := make([]any, len(members))
 	for i, v := range members {
 		members2[i] = v
@@ -99,7 +99,7 @@ func (r *redisV9Wrapper) ZAdd(key string, values map[string]float64) error {
 	return wrapErr(r.inner.ZAdd(context.Background(), key, zs...).Err())
 }
 
-func (r *redisV9Wrapper) ZRem(key string, members []string) error {
+func (r *redisV9Wrapper) ZRem(key string, members ...string) error {
 	members2 := make([]any, len(members))
 	for i, v := range members {
 		members2[i] = v
@@ -183,7 +183,7 @@ type redisClusterWrapper struct {
 	inner *redis.ClusterClient
 }
 
-func (r *redisClusterWrapper) Eval(script string, keys []string, args []any) (any, error) {
+func (r *redisClusterWrapper) Eval(script string, keys []string, args ...any) (any, error) {
 	ret, err := r.inner.Eval(context.Background(), script, keys, args...).Result()
 	return ret, wrapErr(err)
 }
@@ -198,7 +198,7 @@ func (r *redisClusterWrapper) Get(key string) (string, error) {
 	return ret, wrapErr(err)
 }
 
-func (r *redisClusterWrapper) Del(keys []string) error {
+func (r *redisClusterWrapper) Del(keys ...string) error {
 	return wrapErr(r.inner.Del(context.Background(), keys...).Err())
 }
 
@@ -206,7 +206,7 @@ func (r *redisClusterWrapper) HSet(key string, field string, value string) error
 	return wrapErr(r.inner.HSet(context.Background(), key, field, value).Err())
 }
 
-func (r *redisClusterWrapper) HDel(key string, fields []string) error {
+func (r *redisClusterWrapper) HDel(key string, fields ...string) error {
 	return wrapErr(r.inner.HDel(context.Background(), key, fields...).Err())
 }
 
@@ -215,7 +215,7 @@ func (r *redisClusterWrapper) SMembers(key string) ([]string, error) {
 	return ret, wrapErr(err)
 }
 
-func (r *redisClusterWrapper) SRem(key string, members []string) error {
+func (r *redisClusterWrapper) SRem(key string, members ...string) error {
 	members2 := make([]any, len(members))
 	for i, v := range members {
 		members2[i] = v
@@ -234,7 +234,7 @@ func (r *redisClusterWrapper) ZAdd(key string, values map[string]float64) error 
 	return wrapErr(r.inner.ZAdd(context.Background(), key, zs...).Err())
 }
 
-func (r *redisClusterWrapper) ZRem(key string, members []string) error {
+func (r *redisClusterWrapper) ZRem(key string, members ...string) error {
 	members2 := make([]any, len(members))
 	for i, v := range members {
 		members2[i] = v

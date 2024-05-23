@@ -345,13 +345,13 @@ func (q *DelayQueue) batchCallback(ids []string) {
 }
 
 func (q *DelayQueue) ack(idStr string) error {
-	err := redisCli.ZRem(q.unAckKey, []string{idStr})
+	err := redisCli.ZRem(q.unAckKey, idStr)
 	if err != nil {
 		return fmt.Errorf("remove from unack failed: %v", err)
 	}
 	// msg key has ttl, ignore result of delete
-	_ = redisCli.Del([]string{q.genMsgKey(idStr)})
-	_ = redisCli.HDel(q.retryCountKey, []string{idStr})
+	_ = redisCli.Del(q.genMsgKey(idStr))
+	_ = redisCli.HDel(q.retryCountKey, idStr)
 	q.reportEvent(AckEvent, 1)
 	return nil
 }
@@ -458,11 +458,11 @@ func (q *DelayQueue) garbageCollect() error {
 	for _, idStr := range msgIds {
 		msgKeys = append(msgKeys, q.genMsgKey(idStr))
 	}
-	err = redisCli.Del(msgKeys)
+	err = redisCli.Del(msgKeys...)
 	if err != nil && err != NilErr {
 		return fmt.Errorf("del msgs failed: %v", err)
 	}
-	err = redisCli.SRem(q.garbageKey, msgIds)
+	err = redisCli.SRem(q.garbageKey, msgIds...)
 	if err != nil && err != NilErr {
 		return fmt.Errorf("remove from garbage key failed: %v", err)
 	}
