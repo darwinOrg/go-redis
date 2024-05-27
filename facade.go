@@ -21,22 +21,16 @@ func XAdd(stream string, values any) (string, error) {
 	})
 }
 
-func XAddWithExpiration(stream string, expiration time.Duration) (string, error) {
-	ret, err := redisCli.XAdd(&redis.XAddArgs{
-		Stream: stream,
-	})
-	if err != nil {
-		return ret, err
-	}
+func PExpire(stream string, expiration time.Duration) (bool, error) {
 	success, err := redisCli.PExpire(stream, expiration)
 	if err != nil {
-		return ret, err
+		return false, err
 	}
 	if !success {
-		return ret, fmt.Errorf("failed to set expiration for stream %s", stream)
+		return false, fmt.Errorf("failed to set expiration for stream %s", stream)
 	}
 
-	return ret, nil
+	return true, nil
 }
 
 func XAddValues(stream string, values any) (string, error) {
