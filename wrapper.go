@@ -2,6 +2,7 @@ package redisdk
 
 import (
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -42,6 +43,9 @@ type RedisCli interface {
 	XReadGroup(args *redis.XReadGroupArgs) ([]redis.XStream, error)
 	XTrimMaxLen(stream string, maxLen int64) (int64, error)
 	XAck(stream string, group string, messageId string) (int64, error)
+
+	LPush(key string, value ...interface{}) (int64, error)
+	BRPop(key string, timeout time.Duration, callback func(value string) error)
 }
 
 type redisV9Wrapper struct {
@@ -179,6 +183,29 @@ func (r *redisV9Wrapper) XAck(stream string, group string, messageId string) (in
 	return ret, wrapErr(err)
 }
 
+func (r *redisV9Wrapper) LPush(key string, value ...interface{}) (int64, error) {
+	return r.inner.LPush(context.Background(), key, value).Result()
+}
+
+func (r *redisV9Wrapper) BRPop(key string, timeout time.Duration, callback func(value string) error) {
+	go func() {
+		for {
+			results, err := r.inner.BRPop(context.Background(), timeout, key).Result()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			for _, s := range results {
+				err = callback(s)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+			}
+		}
+	}()
+}
+
 type redisClusterWrapper struct {
 	inner *redis.ClusterClient
 }
@@ -312,4 +339,27 @@ func (r *redisClusterWrapper) XTrimMaxLen(stream string, maxLen int64) (int64, e
 func (r *redisClusterWrapper) XAck(stream string, group string, messageId string) (int64, error) {
 	ret, err := r.inner.XAck(context.Background(), stream, group, messageId).Result()
 	return ret, wrapErr(err)
+}
+
+func (r *redisClusterWrapper) LPush(key string, value ...interface{}) (int64, error) {
+	return r.inner.LPush(context.Background(), key, value).Result()
+}
+
+func (r *redisClusterWrapper) BRPop(key string, timeout time.Duration, callback func(value string) error) {
+	go func() {
+		for {
+			results, err := r.inner.BRPop(context.Background(), timeout, key).Result()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			for _, s := range results {
+				err = callback(s)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+			}
+		}
+	}()
 }

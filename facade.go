@@ -101,3 +101,11 @@ func ReleaseLock(lockKey string) error {
 	}
 	return nil
 }
+
+func LPush(key string, value ...interface{}) (int64, error) {
+	return redisCli.LPush(key, value)
+}
+
+func BRPop(key string, timeout time.Duration, callback func(value string) error) {
+	redisCli.BRPop(key, timeout, callback)
+}
