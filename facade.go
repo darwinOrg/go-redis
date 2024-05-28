@@ -106,6 +106,6 @@ func LPush(key string, value ...interface{}) (int64, error) {
 	return redisCli.LPush(key, value)
 }
 
-func BRPop(key string, timeout time.Duration, callback func(value string) error) {
+func BRPop(key string, timeout time.Duration, callback BRPopCallback) {
 	redisCli.BRPop(key, timeout, callback)
 }

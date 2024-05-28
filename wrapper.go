@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+type BRPopCallback func(value string) (bool, error)
+
 // RedisCli is abstraction for redis client, required commands only not all commands
 type RedisCli interface {
 	// Eval sends lua script to redis
@@ -45,7 +47,7 @@ type RedisCli interface {
 	XAck(stream string, group string, messageId string) (int64, error)
 
 	LPush(key string, value ...interface{}) (int64, error)
-	BRPop(key string, timeout time.Duration, callback func(value string) error)
+	BRPop(key string, timeout time.Duration, callback BRPopCallback)
 }
 
 type redisV9Wrapper struct {
@@ -187,7 +189,7 @@ func (r *redisV9Wrapper) LPush(key string, value ...interface{}) (int64, error) 
 	return r.inner.LPush(context.Background(), key, value).Result()
 }
 
-func (r *redisV9Wrapper) BRPop(key string, timeout time.Duration, callback func(value string) error) {
+func (r *redisV9Wrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
 	go func() {
 		for {
 			results, err := r.inner.BRPop(context.Background(), timeout, key).Result()
@@ -196,10 +198,12 @@ func (r *redisV9Wrapper) BRPop(key string, timeout time.Duration, callback func(
 				return
 			}
 			for _, s := range results {
-				err = callback(s)
+				ok, err := callback(s)
+				if !ok {
+					return
+				}
 				if err != nil {
 					fmt.Println(err)
-					return
 				}
 			}
 		}
@@ -345,7 +349,7 @@ func (r *redisClusterWrapper) LPush(key string, value ...interface{}) (int64, er
 	return r.inner.LPush(context.Background(), key, value).Result()
 }
 
-func (r *redisClusterWrapper) BRPop(key string, timeout time.Duration, callback func(value string) error) {
+func (r *redisClusterWrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
 	go func() {
 		for {
 			results, err := r.inner.BRPop(context.Background(), timeout, key).Result()
@@ -354,10 +358,12 @@ func (r *redisClusterWrapper) BRPop(key string, timeout time.Duration, callback 
 				return
 			}
 			for _, s := range results {
-				err = callback(s)
+				ok, err := callback(s)
+				if !ok {
+					return
+				}
 				if err != nil {
 					fmt.Println(err)
-					return
 				}
 			}
 		}
