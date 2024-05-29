@@ -8,6 +8,7 @@ import (
 )
 
 type BRPopCallback func(value string) (bool, error)
+type BRPopFunc func(ctx context.Context, timeout time.Duration, keys ...string) *redis.StringSliceCmd
 
 // RedisCli is abstraction for redis client, required commands only not all commands
 type RedisCli interface {
@@ -190,24 +191,7 @@ func (r *redisV9Wrapper) LPush(key string, value ...interface{}) (int64, error) 
 }
 
 func (r *redisV9Wrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
-	go func() {
-		for {
-			results, err := r.inner.BRPop(context.Background(), timeout, key).Result()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			for _, s := range results {
-				ok, err := callback(s)
-				if !ok {
-					return
-				}
-				if err != nil {
-					fmt.Println(err)
-				}
-			}
-		}
-	}()
+	innerBRPop(r.inner.BRPop, key, timeout, callback)
 }
 
 type redisClusterWrapper struct {
@@ -350,16 +334,20 @@ func (r *redisClusterWrapper) LPush(key string, value ...interface{}) (int64, er
 }
 
 func (r *redisClusterWrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
+	innerBRPop(r.inner.BRPop, key, timeout, callback)
+}
+
+func innerBRPop(brPopFunc BRPopFunc, key string, timeout time.Duration, callback BRPopCallback) {
 	go func() {
 		for {
-			results, err := r.inner.BRPop(context.Background(), timeout, key).Result()
+			results, err := brPopFunc(context.Background(), timeout, key).Result()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			for _, s := range results {
-				ok, err := callback(s)
-				if !ok {
+			if len(results) == 2 {
+				ok, err := callback(results[1])
+				if ok {
 					return
 				}
 				if err != nil {
