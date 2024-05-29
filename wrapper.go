@@ -187,7 +187,7 @@ func (r *redisV9Wrapper) XAck(stream string, group string, messageId string) (in
 }
 
 func (r *redisV9Wrapper) LPush(key string, value ...interface{}) (int64, error) {
-	return r.inner.LPush(context.Background(), key, value).Result()
+	return r.inner.LPush(context.Background(), key, value...).Result()
 }
 
 func (r *redisV9Wrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
@@ -330,7 +330,7 @@ func (r *redisClusterWrapper) XAck(stream string, group string, messageId string
 }
 
 func (r *redisClusterWrapper) LPush(key string, value ...interface{}) (int64, error) {
-	return r.inner.LPush(context.Background(), key, value).Result()
+	return r.inner.LPush(context.Background(), key, value...).Result()
 }
 
 func (r *redisClusterWrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
