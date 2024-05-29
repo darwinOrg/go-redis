@@ -16,6 +16,12 @@ func InitClient(addr string) {
 	})}
 }
 
+func NewClient(addr string) RedisCli {
+	return &redisV9Wrapper{redis.NewClient(&redis.Options{
+		Addr: addr,
+	})}
+}
+
 func SetClusterClient(client *redis.ClusterClient) {
 	redisCli = &redisClusterWrapper{
 		inner: client,
@@ -28,8 +34,21 @@ func InitClusterClient(addrs []string) {
 	})}
 }
 
+func NewClusterClient(addrs []string) RedisCli {
+	return &redisClusterWrapper{redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs: addrs,
+	})}
+}
+
 func InitFailoverClient(masterName string, sentinelAddrs []string) {
 	redisCli = &redisV9Wrapper{redis.NewFailoverClient(&redis.FailoverOptions{
+		MasterName:    masterName,
+		SentinelAddrs: sentinelAddrs,
+	})}
+}
+
+func NewFailoverClient(masterName string, sentinelAddrs []string) RedisCli {
+	return &redisV9Wrapper{redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    masterName,
 		SentinelAddrs: sentinelAddrs,
 	})}
