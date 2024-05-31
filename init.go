@@ -53,3 +53,7 @@ func NewFailoverClient(masterName string, sentinelAddrs []string) RedisCli {
 		SentinelAddrs: sentinelAddrs,
 	})}
 }
+
+func GetDefaultRedisCli() RedisCli {
+	return redisCli
+}
