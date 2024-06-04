@@ -2,13 +2,9 @@ package redisdk
 
 import (
 	"context"
-	"fmt"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
-
-type BRPopCallback func(value string) error
-type BRPopFunc func(ctx context.Context, timeout time.Duration, keys ...string) *redis.StringSliceCmd
 
 // RedisCli is abstraction for redis client, required commands only not all commands
 type RedisCli interface {
@@ -48,7 +44,7 @@ type RedisCli interface {
 	XAck(stream string, group string, messageId string) (int64, error)
 
 	LPush(key string, value ...interface{}) (int64, error)
-	BRPop(ctx context.Context, key string, timeout time.Duration, callback BRPopCallback)
+	BRPop(timeout time.Duration, key string) ([]string, error)
 }
 
 type redisV9Wrapper struct {
@@ -190,8 +186,8 @@ func (r *redisV9Wrapper) LPush(key string, value ...interface{}) (int64, error) 
 	return r.inner.LPush(context.Background(), key, value...).Result()
 }
 
-func (r *redisV9Wrapper) BRPop(ctx context.Context, key string, timeout time.Duration, callback BRPopCallback) {
-	innerBRPop(ctx, r.inner.BRPop, key, timeout, callback)
+func (r *redisV9Wrapper) BRPop(timeout time.Duration, key string) ([]string, error) {
+	return r.inner.BRPop(context.Background(), timeout, key).Result()
 }
 
 type redisClusterWrapper struct {
@@ -333,27 +329,6 @@ func (r *redisClusterWrapper) LPush(key string, value ...interface{}) (int64, er
 	return r.inner.LPush(context.Background(), key, value...).Result()
 }
 
-func (r *redisClusterWrapper) BRPop(ctx context.Context, key string, timeout time.Duration, callback BRPopCallback) {
-	innerBRPop(ctx, r.inner.BRPop, key, timeout, callback)
-}
-
-func innerBRPop(ctx context.Context, brPopFunc BRPopFunc, key string, timeout time.Duration, callback BRPopCallback) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				results, err := brPopFunc(context.Background(), timeout, key).Result()
-				if err != nil {
-					fmt.Println(err)
-					time.Sleep(time.Second)
-					continue
-				}
-				if len(results) == 2 {
-					_ = callback(results[1])
-				}
-			}
-		}
-	}()
+func (r *redisClusterWrapper) BRPop(timeout time.Duration, key string) ([]string, error) {
+	return r.inner.BRPop(context.Background(), timeout, key).Result()
 }
