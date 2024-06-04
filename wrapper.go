@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type BRPopCallback func(value string) (bool, error)
+type BRPopCallback func(value string) error
 type BRPopFunc func(ctx context.Context, timeout time.Duration, keys ...string) *redis.StringSliceCmd
 
 // RedisCli is abstraction for redis client, required commands only not all commands
@@ -48,7 +48,7 @@ type RedisCli interface {
 	XAck(stream string, group string, messageId string) (int64, error)
 
 	LPush(key string, value ...interface{}) (int64, error)
-	BRPop(key string, timeout time.Duration, callback BRPopCallback)
+	BRPop(ctx context.Context, key string, timeout time.Duration, callback BRPopCallback)
 }
 
 type redisV9Wrapper struct {
@@ -190,8 +190,8 @@ func (r *redisV9Wrapper) LPush(key string, value ...interface{}) (int64, error) 
 	return r.inner.LPush(context.Background(), key, value...).Result()
 }
 
-func (r *redisV9Wrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
-	innerBRPop(r.inner.BRPop, key, timeout, callback)
+func (r *redisV9Wrapper) BRPop(ctx context.Context, key string, timeout time.Duration, callback BRPopCallback) {
+	innerBRPop(ctx, r.inner.BRPop, key, timeout, callback)
 }
 
 type redisClusterWrapper struct {
@@ -333,26 +333,25 @@ func (r *redisClusterWrapper) LPush(key string, value ...interface{}) (int64, er
 	return r.inner.LPush(context.Background(), key, value...).Result()
 }
 
-func (r *redisClusterWrapper) BRPop(key string, timeout time.Duration, callback BRPopCallback) {
-	innerBRPop(r.inner.BRPop, key, timeout, callback)
+func (r *redisClusterWrapper) BRPop(ctx context.Context, key string, timeout time.Duration, callback BRPopCallback) {
+	innerBRPop(ctx, r.inner.BRPop, key, timeout, callback)
 }
 
-func innerBRPop(brPopFunc BRPopFunc, key string, timeout time.Duration, callback BRPopCallback) {
+func innerBRPop(ctx context.Context, brPopFunc BRPopFunc, key string, timeout time.Duration, callback BRPopCallback) {
 	go func() {
 		for {
-			results, err := brPopFunc(context.Background(), timeout, key).Result()
-			if err != nil {
-				fmt.Println(err)
-				time.Sleep(time.Second)
-				continue
-			}
-			if len(results) == 2 {
-				ok, err := callback(results[1])
-				if ok {
-					return
-				}
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				results, err := brPopFunc(context.Background(), timeout, key).Result()
 				if err != nil {
 					fmt.Println(err)
+					time.Sleep(time.Second)
+					continue
+				}
+				if len(results) == 2 {
+					_ = callback(results[1])
 				}
 			}
 		}
