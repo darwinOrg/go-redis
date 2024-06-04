@@ -1,6 +1,7 @@
 package redisdk
 
 import (
+	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"time"
@@ -106,6 +107,6 @@ func LPush(key string, value ...interface{}) (int64, error) {
 	return redisCli.LPush(key, value...)
 }
 
-func BRPop(key string, timeout time.Duration, callback BRPopCallback) {
-	redisCli.BRPop(key, timeout, callback)
+func BRPop(ctx context.Context, key string, timeout time.Duration, callback BRPopCallback) {
+	redisCli.BRPop(ctx, key, timeout, callback)
 }
