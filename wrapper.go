@@ -343,7 +343,8 @@ func innerBRPop(brPopFunc BRPopFunc, key string, timeout time.Duration, callback
 			results, err := brPopFunc(context.Background(), timeout, key).Result()
 			if err != nil {
 				fmt.Println(err)
-				return
+				time.Sleep(time.Second)
+				continue
 			}
 			if len(results) == 2 {
 				ok, err := callback(results[1])
