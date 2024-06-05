@@ -183,11 +183,13 @@ func (r *redisV9Wrapper) XAck(stream string, group string, messageId string) (in
 }
 
 func (r *redisV9Wrapper) LPush(key string, value ...interface{}) (int64, error) {
-	return r.inner.LPush(context.Background(), key, value...).Result()
+	ret, err := r.inner.LPush(context.Background(), key, value...).Result()
+	return ret, wrapErr(err)
 }
 
 func (r *redisV9Wrapper) BRPop(timeout time.Duration, key string) ([]string, error) {
-	return r.inner.BRPop(context.Background(), timeout, key).Result()
+	ret, err := r.inner.BRPop(context.Background(), timeout, key).Result()
+	return ret, wrapErr(err)
 }
 
 type redisClusterWrapper struct {
@@ -326,9 +328,11 @@ func (r *redisClusterWrapper) XAck(stream string, group string, messageId string
 }
 
 func (r *redisClusterWrapper) LPush(key string, value ...interface{}) (int64, error) {
-	return r.inner.LPush(context.Background(), key, value...).Result()
+	ret, err := r.inner.LPush(context.Background(), key, value...).Result()
+	return ret, wrapErr(err)
 }
 
 func (r *redisClusterWrapper) BRPop(timeout time.Duration, key string) ([]string, error) {
-	return r.inner.BRPop(context.Background(), timeout, key).Result()
+	ret, err := r.inner.BRPop(context.Background(), timeout, key).Result()
+	return ret, wrapErr(err)
 }
