@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/redis/go-redis/v9 v9.5.2
+	github.com/redis/go-redis/v9 v9.6.1
 )
 
 require (
