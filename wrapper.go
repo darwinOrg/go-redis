@@ -13,6 +13,7 @@ type RedisCli interface {
 	// returns string, int64, []any (elements can be string or int64)
 	Eval(script string, keys []string, args ...any) (any, error)
 	Set(key string, value any, expiration time.Duration) (string, error)
+	Expire(key string, expiration time.Duration) (bool, error)
 	// Get represents redis command GET
 	// please NilErr when no such key in redis
 	Get(key string) (string, error)
@@ -59,6 +60,11 @@ func (r *redisV9Wrapper) Eval(script string, keys []string, args ...any) (any, e
 func (r *redisV9Wrapper) Set(key string, value any, expiration time.Duration) (string, error) {
 	ret, err := r.inner.Set(context.Background(), key, value, expiration).Result()
 	return ret, wrapErr(err)
+}
+
+func (r *redisV9Wrapper) Expire(key string, expiration time.Duration) (bool, error) {
+	ok, err := r.inner.Expire(context.Background(), key, expiration).Result()
+	return ok, wrapErr(err)
 }
 
 func (r *redisV9Wrapper) Get(key string) (string, error) {
@@ -204,6 +210,11 @@ func (r *redisClusterWrapper) Eval(script string, keys []string, args ...any) (a
 func (r *redisClusterWrapper) Set(key string, value any, expiration time.Duration) (string, error) {
 	ret, err := r.inner.Set(context.Background(), key, value, expiration).Result()
 	return ret, wrapErr(err)
+}
+
+func (r *redisClusterWrapper) Expire(key string, expiration time.Duration) (bool, error) {
+	ok, err := r.inner.Expire(context.Background(), key, expiration).Result()
+	return ok, wrapErr(err)
 }
 
 func (r *redisClusterWrapper) Get(key string) (string, error) {
