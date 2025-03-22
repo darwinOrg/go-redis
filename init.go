@@ -54,6 +54,14 @@ func NewFailoverClient(masterName string, sentinelAddrs []string) RedisCli {
 	})}
 }
 
-func GetDefaultRedisCli() RedisCli {
+func GetDefaultClient() RedisCli {
 	return redisCli
+}
+
+func GetInnerClient() *redis.Client {
+	return redisCli.(*redisV9Wrapper).inner
+}
+
+func GetInnerClusterClient() *redis.ClusterClient {
+	return redisCli.(*redisClusterWrapper).inner
 }

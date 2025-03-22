@@ -7,28 +7,31 @@ import (
 	"time"
 )
 
-type DelayQueueCallback func(ctx *dgctx.DgContext, payload string) error
+type DelayQueueCallback func(payload string) bool
 
 type DelayQueue struct {
 	queue      *delayqueue.DelayQueue
-	retryCount uint
+	retryCount int
 }
 
-func NewDelayQueue(name string, retryCount uint, callback DelayQueueCallback) *DelayQueue {
-	queue := delayqueue.NewQueue(name, redisCli.(*redisV9Wrapper).inner, callback)
+func NewDelayQueue(name string, callback DelayQueueCallback) *DelayQueue {
+	queue := delayqueue.NewQueue(name, GetInnerClient()).WithCallback(callback)
 
 	return &DelayQueue{
-		queue:      queue,
-		retryCount: retryCount,
+		queue: queue,
 	}
 }
 
 func (d *DelayQueue) SendDelayMsg(ctx *dgctx.DgContext, payload string, duration time.Duration) error {
-	_, err := d.queue.SendDelayMsgV2(payload, duration, d.retryCount)
+	_, err := d.queue.SendDelayMsgV2(payload, duration)
 	if err != nil {
 		dglogger.Errorf(ctx, "send delay msg error: %v", err)
 		return err
 	}
 
 	return nil
+}
+
+func (d *DelayQueue) StartConsume() <-chan struct{} {
+	return d.queue.StartConsume()
 }
