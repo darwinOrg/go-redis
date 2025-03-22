@@ -34,7 +34,7 @@ func (d *DelayQueue) SendDelayMsg(ctx *dgctx.DgContext, payload string, duration
 		dglogger.Errorf(ctx, "send delay msg error: %v", err)
 		return err
 	}
-
+	dglogger.Infof(ctx, "send delay msg success: %s", payload)
 	return nil
 }
 
