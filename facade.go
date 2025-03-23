@@ -132,11 +132,11 @@ func Del(keys ...string) (int64, error) {
 	}
 }
 
-func SetNX(lockKey string, ttl time.Duration) (bool, error) {
+func SetNX(key string, value any, expiration time.Duration) (bool, error) {
 	if redisCli != nil {
-		return redisCli.SetNX(context.Background(), lockKey, "locked", ttl).Result()
+		return redisCli.SetNX(context.Background(), key, value, expiration).Result()
 	} else {
-		return clusterCli.SetNX(context.Background(), lockKey, "locked", ttl).Result()
+		return clusterCli.SetNX(context.Background(), key, value, expiration).Result()
 	}
 }
 
