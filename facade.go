@@ -23,6 +23,14 @@ func Get(key string) (string, error) {
 	}
 }
 
+func Expire(key string, expiration time.Duration) (bool, error) {
+	if redisCli != nil {
+		return redisCli.Expire(context.Background(), key, expiration).Result()
+	} else {
+		return clusterCli.Expire(context.Background(), key, expiration).Result()
+	}
+}
+
 func XAdd(stream string, values any) (string, error) {
 	if redisCli != nil {
 		return redisCli.XAdd(context.Background(), &redis.XAddArgs{Stream: stream, Values: values}).Result()
@@ -121,6 +129,22 @@ func Del(keys ...string) (int64, error) {
 		return redisCli.Del(context.Background(), keys...).Result()
 	} else {
 		return clusterCli.Del(context.Background(), keys...).Result()
+	}
+}
+
+func SetNX(lockKey string, ttl time.Duration) (bool, error) {
+	if redisCli != nil {
+		return redisCli.SetNX(context.Background(), lockKey, "locked", ttl).Result()
+	} else {
+		return clusterCli.SetNX(context.Background(), lockKey, "locked", ttl).Result()
+	}
+}
+
+func Eval(luaScript, lockKey string) (any, error) {
+	if redisCli != nil {
+		return redisCli.Eval(context.Background(), luaScript, []string{lockKey}, []any{"locked"}).Result()
+	} else {
+		return clusterCli.Eval(context.Background(), luaScript, []string{lockKey}, []any{"locked"}).Result()
 	}
 }
 
