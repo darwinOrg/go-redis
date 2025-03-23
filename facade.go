@@ -140,11 +140,11 @@ func SetNX(lockKey string, ttl time.Duration) (bool, error) {
 	}
 }
 
-func Eval(luaScript, lockKey string) (any, error) {
+func Eval(script string, keys []string, args ...any) (any, error) {
 	if redisCli != nil {
-		return redisCli.Eval(context.Background(), luaScript, []string{lockKey}, []any{"locked"}).Result()
+		return redisCli.Eval(context.Background(), script, keys, args...).Result()
 	} else {
-		return clusterCli.Eval(context.Background(), luaScript, []string{lockKey}, []any{"locked"}).Result()
+		return clusterCli.Eval(context.Background(), script, keys, args...).Result()
 	}
 }
 
