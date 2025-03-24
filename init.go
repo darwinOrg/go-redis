@@ -2,58 +2,53 @@ package redisdk
 
 import "github.com/redis/go-redis/v9"
 
-var redisCli RedisCli
+var redisCli *redis.Client
+var clusterCli *redis.ClusterClient
 
 func SetClient(client *redis.Client) {
-	redisCli = &redisV9Wrapper{
-		inner: client,
-	}
+	redisCli = client
 }
 
 func InitClient(addr string) {
-	redisCli = &redisV9Wrapper{redis.NewClient(&redis.Options{
-		Addr: addr,
-	})}
+	redisCli = redis.NewClient(&redis.Options{Addr: addr})
 }
 
-func NewClient(addr string) RedisCli {
-	return &redisV9Wrapper{redis.NewClient(&redis.Options{
+func NewClient(addr string) *redis.Client {
+	return redis.NewClient(&redis.Options{
 		Addr: addr,
-	})}
+	})
 }
 
 func SetClusterClient(client *redis.ClusterClient) {
-	redisCli = &redisClusterWrapper{
-		inner: client,
-	}
+	clusterCli = client
 }
 
 func InitClusterClient(addrs []string) {
-	redisCli = &redisClusterWrapper{redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: addrs,
-	})}
+	clusterCli = redis.NewClusterClient(&redis.ClusterOptions{Addrs: addrs})
 }
 
-func NewClusterClient(addrs []string) RedisCli {
-	return &redisClusterWrapper{redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: addrs,
-	})}
+func NewClusterClient(addrs []string) *redis.ClusterClient {
+	return redis.NewClusterClient(&redis.ClusterOptions{Addrs: addrs})
 }
 
 func InitFailoverClient(masterName string, sentinelAddrs []string) {
-	redisCli = &redisV9Wrapper{redis.NewFailoverClient(&redis.FailoverOptions{
+	redisCli = redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    masterName,
 		SentinelAddrs: sentinelAddrs,
-	})}
+	})
 }
 
-func NewFailoverClient(masterName string, sentinelAddrs []string) RedisCli {
-	return &redisV9Wrapper{redis.NewFailoverClient(&redis.FailoverOptions{
+func NewFailoverClient(masterName string, sentinelAddrs []string) *redis.Client {
+	return redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    masterName,
 		SentinelAddrs: sentinelAddrs,
-	})}
+	})
 }
 
-func GetDefaultRedisCli() RedisCli {
+func GetRedisClient() *redis.Client {
 	return redisCli
+}
+
+func GetClusterClient() *redis.ClusterClient {
+	return clusterCli
 }
