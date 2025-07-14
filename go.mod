@@ -3,10 +3,10 @@ module github.com/darwinOrg/go-redis
 go 1.23.1
 
 require (
-	github.com/darwinOrg/go-common v0.1.81
-	github.com/darwinOrg/go-logger v0.0.9
-	github.com/hdt3213/delayqueue v1.1.1
-	github.com/redis/go-redis/v9 v9.7.3
+	github.com/darwinOrg/go-common v0.1.93
+	github.com/darwinOrg/go-logger v0.0.12
+	github.com/hdt3213/delayqueue v1.1.2
+	github.com/redis/go-redis/v9 v9.11.0
 )
 
 require (
@@ -18,5 +18,5 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 )
