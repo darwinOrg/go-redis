@@ -2,15 +2,20 @@ package redisdk
 
 import "github.com/redis/go-redis/v9"
 
-var redisCli *redis.Client
-var clusterCli *redis.ClusterClient
+var (
+	redisCli        *redis.Client
+	clusterCli      *redis.ClusterClient
+	universalClient redis.UniversalClient
+)
 
 func SetClient(client *redis.Client) {
 	redisCli = client
+	universalClient = redisCli
 }
 
 func InitClient(addr string) {
 	redisCli = redis.NewClient(&redis.Options{Addr: addr})
+	universalClient = redisCli
 }
 
 func NewClient(addr string) *redis.Client {
@@ -21,10 +26,12 @@ func NewClient(addr string) *redis.Client {
 
 func SetClusterClient(client *redis.ClusterClient) {
 	clusterCli = client
+	universalClient = clusterCli
 }
 
 func InitClusterClient(addrs []string) {
 	clusterCli = redis.NewClusterClient(&redis.ClusterOptions{Addrs: addrs})
+	universalClient = clusterCli
 }
 
 func NewClusterClient(addrs []string) *redis.ClusterClient {
@@ -36,6 +43,7 @@ func InitFailoverClient(masterName string, sentinelAddrs []string) {
 		MasterName:    masterName,
 		SentinelAddrs: sentinelAddrs,
 	})
+	universalClient = redisCli
 }
 
 func NewFailoverClient(masterName string, sentinelAddrs []string) *redis.Client {
@@ -51,4 +59,8 @@ func GetRedisClient() *redis.Client {
 
 func GetClusterClient() *redis.ClusterClient {
 	return clusterCli
+}
+
+func GetUniversalClient() redis.UniversalClient {
+	return universalClient
 }
