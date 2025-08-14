@@ -2,16 +2,22 @@ package redisdk
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/redis/go-redis/v9"
 	"time"
 )
 
-func Set(key string, value any, expiration time.Duration) (val string, err error) {
+func Set(key string, value any, expiration time.Duration) (string, error) {
 	return universalClient.Set(context.Background(), key, value, expiration).Result()
 }
 
 func Get(key string) (string, error) {
-	return universalClient.Get(context.Background(), key).Result()
+	val, err := universalClient.Get(context.Background(), key).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return "", err
+	}
+	return val, nil
 }
 
 func Expire(key string, expiration time.Duration) (bool, error) {
