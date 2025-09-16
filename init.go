@@ -1,6 +1,10 @@
 package redisdk
 
-import "github.com/redis/go-redis/v9"
+import (
+	"os"
+
+	"github.com/redis/go-redis/v9"
+)
 
 var (
 	redisCli        *redis.Client
@@ -14,13 +18,27 @@ func SetClient(client *redis.Client) {
 }
 
 func InitClient(addr string) {
-	redisCli = redis.NewClient(&redis.Options{Addr: addr})
+	if addr == "" {
+		addr = os.Getenv("REDIS_ADDR")
+	}
+
+	redisCli = redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Username: os.Getenv("REDIS_USERNAME"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+	})
 	universalClient = redisCli
 }
 
 func NewClient(addr string) *redis.Client {
+	if addr == "" {
+		addr = os.Getenv("REDIS_ADDR")
+	}
+
 	return redis.NewClient(&redis.Options{
-		Addr: addr,
+		Addr:     addr,
+		Username: os.Getenv("REDIS_USERNAME"),
+		Password: os.Getenv("REDIS_PASSWORD"),
 	})
 }
 
