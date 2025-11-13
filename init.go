@@ -2,6 +2,7 @@ package redisdk
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -26,6 +27,7 @@ func InitClient(addr string) {
 		Addr:     addr,
 		Username: os.Getenv("REDIS_USERNAME"),
 		Password: os.Getenv("REDIS_PASSWORD"),
+		PoolSize: getRedisPoolSize(),
 	})
 	universalClient = redisCli
 }
@@ -39,6 +41,7 @@ func NewClient(addr string) *redis.Client {
 		Addr:     addr,
 		Username: os.Getenv("REDIS_USERNAME"),
 		Password: os.Getenv("REDIS_PASSWORD"),
+		PoolSize: getRedisPoolSize(),
 	})
 }
 
@@ -81,4 +84,14 @@ func GetClusterClient() *redis.ClusterClient {
 
 func GetUniversalClient() redis.UniversalClient {
 	return universalClient
+}
+
+func getRedisPoolSize() int {
+	poolSize := os.Getenv("REDIS_POOL_SIZE")
+	if poolSize == "" {
+		return 10
+	}
+
+	poolSizeInt, _ := strconv.Atoi(poolSize)
+	return poolSizeInt
 }
