@@ -89,7 +89,7 @@ func GetUniversalClient() redis.UniversalClient {
 func getRedisPoolSize() int {
 	poolSize := os.Getenv("REDIS_POOL_SIZE")
 	if poolSize == "" {
-		return 10
+		return 0
 	}
 
 	poolSizeInt, _ := strconv.Atoi(poolSize)
