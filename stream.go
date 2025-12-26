@@ -2,8 +2,9 @@ package redisdk
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 func XAdd(stream string, values any) (string, error) {
