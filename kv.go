@@ -47,3 +47,7 @@ func SetNX(key string, value any, expiration time.Duration) (bool, error) {
 func Eval(script string, keys []string, args ...any) (any, error) {
 	return universalClient.Eval(context.Background(), script, keys, args...).Result()
 }
+
+func TTL(key string) (time.Duration, error) {
+	return universalClient.TTL(context.Background(), key).Result()
+}
