@@ -23,12 +23,9 @@ func ReleaseLock(lockKey string) error {
 		return 0
 	end
 	`
-	res, err := universalClient.Eval(context.Background(), luaScript, []string{lockKey}, []any{"locked"}).Result()
+	_, err := universalClient.Eval(context.Background(), luaScript, []string{lockKey}, []any{"locked"}).Result()
 	if err != nil {
 		return fmt.Errorf("failed to release lock: %w", err)
-	}
-	if res.(int64) == 0 {
-		return fmt.Errorf("lock was not held")
 	}
 	return nil
 }
